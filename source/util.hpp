@@ -53,7 +53,6 @@ public:
         {
             ELOG("%s\n", sql.c_str());
             ELOG("mysql query failed : %s\n", mysql_error(mysql));
-            mysql_close(mysql);
             return false;
         }
         return true;
