@@ -27,9 +27,7 @@ public:
     }
     bool insert(Json::Value &user)
     {
-#define INSERT_USER "insert user values(null, '%s', password('%s'), 1000, 0, 0);"
-
-
+#define INSERT_USER "insert into user values(null, '%s', SHA2('%s',256), 1000, 0, 0);"
         // Json::Value val;
         // bool ret = select_by_name(user["username"].asCString(), val);
         // if (ret == true)

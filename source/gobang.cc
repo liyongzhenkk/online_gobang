@@ -1,6 +1,7 @@
 //#include"logger.hpp"
 #include"util.hpp"
 #include"db.hpp"
+#include"online.hpp"
 
 #define HOST "127.0.0.1"
 #define PORT 3306
@@ -88,12 +89,28 @@ void db_test()
     //std::string body;
     //json_util::serialize(user, body);
     //std::cout << body << std::endl;
+} 
+
+void online_test()
+{
+    online_manager om;
+    wsserver_t::connection_ptr conn;
+    uint64_t uid = 2;
+    om.enter_game_hall(uid,conn);
+    if(om.is_in_hall(uid))
+    {
+        DLOG("IN GAME HALL");
+    }
+    else{
+        DLOG("NOT IN GAME HALL");
+    }
+
 }
 
 int main()
 {
-    db_test();
-    //Json_test();
+    //db_test();
+    online_test();
     return 0;
 
 }
