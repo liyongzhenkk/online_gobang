@@ -3,6 +3,9 @@
 #include"online.hpp"
 #define BOARD_ROW 15;
 #define BOARD_COl 15;
+#define CHESS_WHITE 1;
+#define CHESS_BLACK 2;
+
 typedef enum{GAME_START, GAME_OVER }room_statu;
 class room
 {
@@ -57,7 +60,21 @@ public:
 
 
     //下棋
-    Json::Value handle_chess(Json::Value& req);
+    Json::Value handle_chess(Json::Value& req)
+    {
+        Json::Value json_resp;
+        //1.
+        uint64_t room_id = req["room_id"].asUInt64();
+        if(room_id != _room_id)
+        {
+            json_resp["optype"] = "put_chess";
+            json_resp["result"] = false;
+            json_resp["reason"] = "房间号不匹配！";
+            return json_resp;
+        }
+        //2.
+        
+    }
     //聊天
     Json::Value handle_chat(Json::Value& req);
     //玩家推出

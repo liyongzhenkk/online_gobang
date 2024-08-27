@@ -31,7 +31,7 @@ public:
         std::unique_lock<std::mutex> lock(_mutex);
         _room_user.erase(uid);
     }
-    bool is_in_hall(uint64_t uid)
+    bool is_in_game_hall(uint64_t uid)
     {
         std::unique_lock<std::mutex> lock(_mutex);
         auto it = _hall_user.find(uid);
@@ -41,7 +41,7 @@ public:
         }
         return true;
     }
-    bool is_in_room(uint64_t uid)
+    bool is_in_game_room(uint64_t uid)
     {
         std::unique_lock<std::mutex> lock(_mutex);
         auto it = _room_user.find(uid);
