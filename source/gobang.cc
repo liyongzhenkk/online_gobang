@@ -1,7 +1,9 @@
 //#include"logger.hpp"
-#include"util.hpp"
-#include"db.hpp"
-#include"online.hpp"
+// #include"util.hpp"
+// #include"db.hpp"
+// #include"online.hpp"
+
+#include"room.hpp"
 
 #define HOST "127.0.0.1"
 #define PORT 3306
@@ -97,7 +99,7 @@ void online_test()
     wsserver_t::connection_ptr conn;
     uint64_t uid = 2;
     om.enter_game_hall(uid,conn);
-    if(om.is_in_hall(uid))
+    if(om.is_in_game_hall(uid))
     {
         DLOG("IN GAME HALL");
     }
@@ -109,8 +111,11 @@ void online_test()
 
 int main()
 {
+    user_table ut(HOST, USER, PASS, DBNAME, PORT);
+    online_manager om;
+    room r(10,&ut,&om);
     //db_test();
-    online_test();
+    //online_test();
     return 0;
 
 }

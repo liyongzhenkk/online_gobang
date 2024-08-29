@@ -1,4 +1,8 @@
+#ifndef _M_ROOM_H__
+#define _M_ROOM_H__ 0
+
 #include "util.hpp"
+#include "logger.hpp"
 #include "db.hpp"
 #include "online.hpp"
 #define BOARD_ROW 15
@@ -278,28 +282,57 @@ public:
             json_resp["result"] = false;
             json_resp["reason"] = "未知请求错误！";
         }
-        
+
         return broadcast(json_resp);
     }
     // 广播
     void broadcast(Json::Value &req)
     {
-        //1.对要响应的信息进行序列话，将json value 序列话成字符串
+        // 1.对要响应的信息进行序列话，将json value 序列话成字符串
         std::string body;
-        Json_util::serialize(req,body);
-        //2. 获取房间中所有用户的一个链接 
-        //3. 逐个进行发送相应信息
+        Json_util::serialize(req, body);
+        // 2. 获取房间中所有用户的一个链接
+        // 3. 逐个进行发送相应信息
         wsserver_t::connection_ptr wconn = _online_user->get_conn_from_room(_white_id);
-        if(wconn.get() != nullptr)
+        if (wconn.get() != nullptr)
         {
             wconn->send(body);
         }
         wsserver_t::connection_ptr bconn = _online_user->get_conn_from_room(_black_id);
-        if(bconn.get() != nullptr)
+        if (bconn.get() != nullptr)
         {
             bconn->send(body);
         }
-        return ;
-         
+        return;
     }
 };
+
+using room_ptr = std::shared_ptr<room>;
+
+class room_manager
+{
+private:
+    uint64_t _next_rid;
+    std::mutex _mutex;
+    user_table *_tb_user;
+    online_manager *_online_user;
+    std::unordered_map<uint64_t, room_ptr> _rooms;
+    std::unordered_map<uint64_t, uint64_t> _users;
+
+public:
+    //初始化房间ID计数器
+    room_manager();
+    ~room_manager();
+    //为两个用户创建房间，并返回房间的智能指针管理对象
+    room_ptr create_room(uint64_t uid1, uint64_t uid2);
+    //通过房间ID获取房间信息
+    room_ptr get_room_by_rid(uint64_t rid);
+    //通过用户ID获取房间信息
+    room_ptr get_room_by_uid(uint64_t rid);
+    //通过房间ID销毁房间
+    void remove_room(uint64_t rid);
+    //删除房间中指定用户，如果房间中没有用户，则销毁房间
+    void remove_room_user(uint64_t uid);
+};
+
+#endif
