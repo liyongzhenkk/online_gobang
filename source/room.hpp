@@ -321,18 +321,113 @@ private:
 
 public:
     //初始化房间ID计数器
-    room_manager();
-    ~room_manager();
+    room_manager(user_table* ut, online_manager* om)
+    :_next_rid(1),_tb_user(ut),_online_user(om)
+    {
+        DLOG("房间管理模块初始化完成！");
+    }
+    ~room_manager()
+    {
+        DLOG("房间管理模块即将销毁！");
+    }
     //为两个用户创建房间，并返回房间的智能指针管理对象
-    room_ptr create_room(uint64_t uid1, uint64_t uid2);
+    room_ptr create_room(uint64_t uid1, uint64_t uid2)
+    {
+        //两个用户在游戏大厅中进行对战匹配，匹配成功后创建房间
+        //1.检验两个用户是否还在游戏大厅中，只有都在才需要创建房间
+        if(_online_user->is_in_game_hall(uid1) == false)
+        {
+            DLOG("用户: %lu 不在大厅中，创建房间失败!! ",uid1);
+            return room_ptr();
+        }
+        if(_online_user->is_in_game_hall(uid2) == false)
+        {
+            DLOG("用户: %lu 不在大厅中，创建房间失败!! ",uid2);
+            return room_ptr();
+        }
+        //2.创建房间，将用户信息添加到房间中
+        std::unique_lock<std::mutex> lock(_mutex);
+        room_ptr rp(new room(_next_rid,_tb_user,_online_user));
+        rp->add_write_user(uid1);
+        rp->add_black_user(uid2);
+        //3.将房间信息管理起来
+        _rooms.insert(std::make_pair(_next_rid,rp));
+        _users.insert(std::make_pair(uid1,_next_rid));
+        _users.insert(std::make_pair(uid2,_next_rid));
+        _next_rid++;
+        //4.返回房间信息
+        return rp;
+    }
     //通过房间ID获取房间信息
-    room_ptr get_room_by_rid(uint64_t rid);
+    room_ptr get_room_by_rid(uint64_t rid)
+    {
+        std::unique_lock<std::mutex> lock(_mutex);
+        auto it = _rooms.find(rid);
+        if(it == _rooms.end())
+        {
+            return room_ptr();
+        }
+        return it->second;
+    }
     //通过用户ID获取房间信息
-    room_ptr get_room_by_uid(uint64_t rid);
+    room_ptr get_room_by_uid(uint64_t uid)
+    {
+        //1.通过用户id 查找房间id
+        std::unique_lock<std::mutex> lock(_mutex);
+        auto uit = _users.find(uid);
+        if(uit == _users.end())
+        {
+            return room_ptr();
+        }
+        //2.通过房间id 获取房间信息
+
+        //！！！！！//锁冲突 不可重入死锁 ！！！！！
+        //return get_room_by_rid(it->second);
+        uint64_t rid = uit->second;
+        auto rit = _rooms.find(rid);
+        if(rit == _rooms.end())
+        {
+            return room_ptr();
+        }
+        return rit->second;
+    }
     //通过房间ID销毁房间
-    void remove_room(uint64_t rid);
+    void remove_room(uint64_t rid)
+    {
+        //因为房间信息是通过shared_ptr 在 rooms中管理，因此只要将shared_ptr从rooms中移除
+        //则sharedptr计数器 == 0 ，外界没有对房间信息进行操作保存的情况下就会释放
+        //1.通过房间id 找到房间信息
+        room_ptr rp = get_room_by_rid(rid);
+        if(rp.get() == nullptr)
+        {
+            return;
+        }
+        //2.通过房间信息，获取房间中所有用户的id
+        uint64_t uid1 = rp->get_white_user();
+        uint64_t uid2 = rp->get_black_user();
+        //3.移除房间管理中的用户信息
+        std::unique_lock<std::mutex> lock(_mutex);
+        _users.erase(uid1);
+        _users.erase(uid2);
+        //4.移除房间管理信息
+        _rooms.erase(rid);
+    }
     //删除房间中指定用户，如果房间中没有用户，则销毁房间
-    void remove_room_user(uint64_t uid);
+    void remove_room_user(uint64_t uid)
+    {
+        room_ptr rp = get_room_by_uid(uid);
+        if(rp.get() == nullptr){
+            return ;
+        }
+        //处理房间中玩家退出动作
+        rp->handle_exit(uid);
+        //房间中没有玩家，销毁房间
+        if(rp->player_count() == 0)
+        {
+            remove_room(rp->id());
+        }
+        return ;
+    }
 };
 
 #endif

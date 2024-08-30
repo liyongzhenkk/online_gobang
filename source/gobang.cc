@@ -113,7 +113,10 @@ int main()
 {
     user_table ut(HOST, USER, PASS, DBNAME, PORT);
     online_manager om;
-    room r(10,&ut,&om);
+    room_manager rm(&ut,&om);
+    room_ptr rp = rm.create_room(10,20);
+
+    //room r(10,&ut,&om);
     //db_test();
     //online_test();
     return 0;
