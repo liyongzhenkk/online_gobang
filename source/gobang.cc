@@ -4,6 +4,7 @@
 // #include"online.hpp"
 
 #include"room.hpp"
+#include"session.hpp"
 
 #define HOST "127.0.0.1"
 #define PORT 3306
@@ -115,7 +116,7 @@ int main()
     online_manager om;
     room_manager rm(&ut,&om);
     room_ptr rp = rm.create_room(10,20);
-
+   // session_manager ssm()
     //room r(10,&ut,&om);
     //db_test();
     //online_test();

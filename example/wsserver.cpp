@@ -5,6 +5,10 @@
 
 typedef websocketpp::server<websocketpp::config::asio> wsserver_t; // 异步输入输入的服务器
 
+void print(const std::string& str)
+{
+    std::cout << str << std::endl;
+}
 void http_callback(wsserver_t *srv, websocketpp::connection_hdl hdl)
 {
     wsserver_t::connection_ptr conn = srv->get_con_from_hdl(hdl);
@@ -16,6 +20,7 @@ void http_callback(wsserver_t *srv, websocketpp::connection_hdl hdl)
     conn->set_body(body);
     conn->append_header("Content-Type", "text/html");
     conn->set_status(websocketpp::http::status_code::ok);
+    srv->set_timer(5000,std::bind(print,"hello lyz"));
 }
 void wsopen_callback(wsserver_t *srv, websocketpp::connection_hdl hdl)
 {
@@ -31,6 +36,7 @@ void wsmsg_callback(wsserver_t *srv, websocketpp::connection_hdl hdl, wsserver_t
     std::cout << "wsmsg : " << msg->get_payload() << std::endl;
     std::string rsp = "client say" + msg->get_payload();
     conn->send(rsp,websocketpp::frame::opcode::text);
+
 }
 
 int main()
